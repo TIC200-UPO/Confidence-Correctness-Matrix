@@ -32,26 +32,43 @@ from ucimlrepo import fetch_ucirepo
 iris  = fetch_ucirepo(id=53) 
 X, y = iris.data.features, iris.data.targets.squeeze()
 
+classes = np.unique(y)
+print(classes)
+
 # Training and predict
 model = GaussianNB().fit(X, y)
 result = model.predict_proba(X)
 
-# Calculates the probabilistic confusion matrix and the probabilistic accuracy
-prob_conf_matrix = prob_confusion_matrix(y, result)
-prob_acc = prob_accuracy(y, result)
+# Calculates the probabilistic confusion matrix and the probabilistic metrics
+prob_conf_matrix = prob_confusion_matrix(y, result, labels=classes)
+prob_acc = prob_accuracy_score(y, result)
+prob_b_acc = prob_balanced_accuracy_score(y, result)
+prob_prec = prob_precision_score(y, result, average="micro")
+prob_recall = prob_recall_score(y, result, average="macro")
+prob_f1 = prob_f1_score(y, result, average="weighted")
+prob_cohen_kappa = prob_cohen_kappa_score(y, result)
+prob_m_corrcoef = prob_matthews_corrcoef(y, result)
 
 print(np.round(prob_conf_matrix,3))
-print(f"Acc*:{np.round(prob_acc,5)}\n")
+print(f"Acc* = {np.round(prob_acc,5)}, B_acc* = {np.round(prob_b_acc,5)}, Prec* = {np.round(prob_prec,5)}, MCC* = {np.round(prob_m_corrcoef,5)}")
+print(f"Recall* = {np.round(prob_recall,5)}, F1* = {np.round(prob_f1,5)}, Cohen Kappa* = {np.round(prob_cohen_kappa,5)}\n")
 
+# Calculates the high-confidence and low-confidence matrices and their lambda values
+H, L = confidence_matrices(y, result)
+lambda_H, lambda_L = confidence_weights(y, result)
 
-# Calculates the certainty and uncertainty confusion matrix, their probabilistic accuracy and their lambda values
-V, U = certainty_matrix(y, result)
-lambda_V, lambda_U = certainty_weights(y, result)
+print(np.round(H,3))
+print(f"lambda_H = {np.round(lambda_H,5)}\n")
+print(np.round(L,3))
+print(f"lambda_L = {np.round(lambda_L,5)}")
 
-print(np.round(V,3))
-print(f"Acc_V*:{np.round(V_acc,5)}, lambda_V:{np.round(lambda_V,5)}\n")
-print(np.round(U,3))
-print(f"Acc_U*:{np.round(U_acc,5)}, lambda_U:{np.round(lambda_U,5)}")
+# Calculates the class-independent confidence-correctness matrix
+ci_confCorrM = confidence_correctness_matrix(y, result, class_dependent=False)
+print(ci_confCorrM)
+
+# Calculates the class-independent confidence-correctness matrix
+cd_confCorrM = confidence_correctness_matrix(y, result, class_dependent=True)
+print(cd_confCorrM)
 ```
 
 ## Result sample
