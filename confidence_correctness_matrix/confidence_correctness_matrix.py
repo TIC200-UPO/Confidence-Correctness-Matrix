@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 
 def _groundTruthMatrix(y_true, labels):
@@ -41,7 +40,7 @@ def _groundTruthMatrix(y_true, labels):
 
     return groundTruthM
 
-def prob_confusion_matrix(y_true, y_prob, labels=None, abs_tolerance=1e-8):
+def prob_confusion_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8):
     """
     Compute the probabilistic confusion matrix.
 
@@ -72,16 +71,16 @@ def prob_confusion_matrix(y_true, y_prob, labels=None, abs_tolerance=1e-8):
         Probabilistic confusion matrix.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
-        y_true = np.asarray(y_true)#.to_numpy()
-        y_prob = np.asarray(y_prob)
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
+        y_true = np.asarray(y_true)
+        y_score = np.asarray(y_score)
     
     # Checks input values
-    if y_true.shape[0] != y_prob.shape[0]:
+    if y_true.shape[0] != y_score.shape[0]:
         raise ValueError("'y_true' and 'y_score' have different number of samples.") 
-    elif len(np.unique(y_true)) != y_prob.shape[1]:
+    elif len(np.unique(y_true)) != y_score.shape[1]:
         raise ValueError("'y_true' and 'y_score' have different number of classes.")
-    elif not np.allclose(1, y_prob.sum(axis=1), rtol=0, atol=abs_tolerance):
+    elif not np.allclose(1, y_score.sum(axis=1), rtol=0, atol=abs_tolerance):
         raise ValueError(
             "Target scores need to be probabilities and they should sum up to 1.0 over classes."
         )
@@ -104,14 +103,113 @@ def prob_confusion_matrix(y_true, y_prob, labels=None, abs_tolerance=1e-8):
     groundTruthM = _groundTruthMatrix(y_true, labels)
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = np.dot(np.transpose(groundTruthM), y_prob)
+    prob_conf_matrix = np.dot(np.transpose(groundTruthM), y_score)
 
     return prob_conf_matrix
 
-#def confidence_correctness_matrix(type="class dependent", "class independent"):
+def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8, class_dependent=False):
+    """
+    Calculate the confidence-correctness matrix in its class-independent or class-dependent versions.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,). 
+        Ground truth (correct) labels.
+
+    y_score : array-like of shape (n_samples, n_classes).
+        Probabilities of predicted labels, as returned by a classifier. The sum of 
+        these probabilities must sum up to 1.0 over classes.
+
+        The order of the class scores must correspond to the numerical or
+        lexicographical order of the labels in y_true.
+
+    labels : array-like of shape (n_classes,), default=None.
+        List of labels to index the matrix. 
+        
+        If 'None' is given, those that appear at least once
+        in 'y_true' or 'y_pred' are used in sorted order.
+
+    abs_tolerance : absolute tolerance threshold for checking whether probabilities
+        sum up to 1.0. Default = 1e-8.
+
+    class-dependent : boolean, default=False.
+        
+        If 'False', the class-independent confidence-correctness matrix is computed, and
+        if 'True', the class-dependent confidence-correctness matrix is computed.
+
+    Returns
+    ----------
+    confCorrM : pandas DataFrame.
+        Returns the values of the serendipity matrix.
+    """
+    if y_true.shape[0] != y_score.shape[0]:
+        raise ValueError("'y_true' and 'y_score' have different number of samples.")
+    
+    if len(np.unique(y_true)) != y_score.shape[1]:
+        raise ValueError("'y_true' and 'y_score' have different number of classes.")
+    
+    if not np.allclose(1, y_score.sum(axis=1), rtol=0, atol=abs_tolerance):
+        raise ValueError(
+            "Target scores need to be probabilities and they should sum up to 1.0 over classes."
+        )
+    
+    # Checks i nput data type
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
+        y_true = np.asarray(y_true)
+        y_score = np.asarray(y_score)
+    
+    # Checks labels list
+    if labels is None:
+        labels = np.unique(y_true)
+    else:
+        if len(labels) == 0:
+            raise ValueError("'labels' should contain at least one label.")
+        elif not set(y_true).issubset(set(labels)):
+            raise ValueError("All of the labels in 'y_true' must be in 'labels'.")
+        elif len(np.intersect1d(y_true, labels)) == 0:
+            raise ValueError("At least one label specified must be in 'y_true'.")
+        
+        if not isinstance(labels, np.ndarray):
+            labels = np.asarray(labels)
+
+    confidence = ["Reliability","Overconfidence","Underconfidence","Ambiguity"]
+
+    if class_dependent == False:
+        tam = y_true.shape[0]
+
+        # Decomposes the y_score probabilistic matrix into certainty and uncertainty
+        H, L = confidence_matrices(y_true, y_score)
+
+        # Computes the serendipity matrix
+        H_acc = np.trace(H)
+        H_inacc = np.sum (H) - np.trace(H)
+        L_inacc = np.trace(L)
+        L_acc = np.sum (L) - np.trace(L)
+
+        serendipityM = np.array([H_acc, H_inacc, L_acc, L_inacc])
+        serendipityM[serendipityM < 0] = 0
+
+        serendipityM = dict(zip(confidence, serendipityM/tam))
+    else:
+        # Decomposes the y_score probabilistic matrix into certainty and uncertainty
+        H, L = confidence_matrices(y_true, y_score)
+          
+        serendipityM = {key: {} for key in labels}
+
+        # Computes the serendipity matrix by class
+        for i in range(H.shape[0]):
+            sum = np.sum(H[i,:], axis=0) + np.sum(L[i,:], axis=0)
+            
+            if sum != 0:
+                serendipityM[labels[i]]["Reliability"] = H[i][i]/sum
+                serendipityM[labels[i]]["Overconfidence"] = (np.sum(H[i,:], axis=0) - H[i][i])/sum
+                serendipityM[labels[i]]["Ambiguity"] = L[i][i]/sum
+                serendipityM[labels[i]]["Underconfidence"] = (np.sum(L[i,:], axis=0) - L[i][i])/sum
+
+    return serendipityM
 
 
-def confidence_matrices(y_true, y_prob, labels=None, abs_tolerance=1e-8):
+def confidence_matrices(y_true, y_score, labels=None, abs_tolerance=1e-8):
     """
     Compute the high-confidence and low-confidence matrices.
 
@@ -145,16 +243,16 @@ def confidence_matrices(y_true, y_prob, labels=None, abs_tolerance=1e-8):
         Low-confidence matrix.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
     
     # Checks input values
-    if y_true.shape[0] != y_prob.shape[0]:
+    if y_true.shape[0] != y_score.shape[0]:
         raise ValueError("'y_true' and 'y_score' have different number of samples.") 
-    elif len(np.unique(y_true)) != y_prob.shape[1]:
+    elif len(np.unique(y_true)) != y_score.shape[1]:
         raise ValueError("'y_true' and 'y_score' have different number of classes.")
-    elif not np.allclose(1, y_prob.sum(axis=1), rtol=0, atol=abs_tolerance):
+    elif not np.allclose(1, y_score.sum(axis=1), rtol=0, atol=abs_tolerance):
         raise ValueError(
             "Target scores need to be probabilities and they should sum up to 1.0 over classes."
         )
@@ -177,23 +275,23 @@ def confidence_matrices(y_true, y_prob, labels=None, abs_tolerance=1e-8):
     groundTruthM = _groundTruthMatrix(y_true, labels)
 
     # Initializes two empty matrix and one empty array
-    H_confM = np.zeros((y_prob.shape[0], y_prob.shape[1]))
-    L_confM = np.zeros((y_prob.shape[0], y_prob.shape[1]))
-    classes = np.zeros((y_prob.shape[1]))
+    H_confM = np.zeros((y_score.shape[0], y_score.shape[1]))
+    L_confM = np.zeros((y_score.shape[0], y_score.shape[1]))
+    classes = np.zeros((y_score.shape[1]))
 
     # Fills the empty array with a different number for each different class
-    for i in range(1, y_prob.shape[1]):
+    for i in range(1, y_score.shape[1]):
         classes[i] = i
 
     # Saves the index for the most likely prediction from the probabilistic prediction matrix
-    H_confIndex = np.argmax(y_prob, axis=1)
+    H_confIndex = np.argmax(y_score, axis=1)
 
     # Saves the probabilistic predictions into the high-confidence and low-confidence matrices
-    for i in range(y_prob.shape[0]):
+    for i in range(y_score.shape[0]):
         L_confIndex = np.delete(classes.astype(int), H_confIndex[i])
-        H_confM[i][H_confIndex[i]] = np.max(y_prob[i])
+        H_confM[i][H_confIndex[i]] = np.max(y_score[i])
         for j in range(len(L_confIndex)):
-            L_confM[i][L_confIndex[j]] = y_prob[i][L_confIndex[j]]
+            L_confM[i][L_confIndex[j]] = y_score[i][L_confIndex[j]]
 
     # Computes the high-confidence and low-confidence matrices
     H = np.dot(np.transpose(groundTruthM), H_confM)
@@ -201,7 +299,7 @@ def confidence_matrices(y_true, y_prob, labels=None, abs_tolerance=1e-8):
 
     return H, L
 
-def confidence_weights(y_true, y_prob, labels=None):
+def confidence_weights(y_true, y_score, labels=None):
     """
     Calculate the lambda values for the high-confidence and low-confidence matrices.
 
@@ -232,10 +330,10 @@ def confidence_weights(y_true, y_prob, labels=None):
         Lambda value for the low-confidence matrix.
     """
     # Computes the probabilistic confusion matrix 
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Computes the high-confidence and low-confidence matrices 
-    H, L = confidence_matrices(y_true, y_prob, labels)
+    H, L = confidence_matrices(y_true, y_score, labels)
 
     # Calculates lambda values for the high-confidence and low-confidence matrices
     lambda_H = np.sum(H)/np.sum(prob_conf_matrix)
@@ -243,7 +341,7 @@ def confidence_weights(y_true, y_prob, labels=None):
 
     return lambda_H, lambda_L
 
-def prob_accuracy_score(y_true, y_prob, labels=None):
+def prob_accuracy_score(y_true, y_score, labels=None):
     """
     Compute the probabilistic accuracy.
 
@@ -271,12 +369,12 @@ def prob_accuracy_score(y_true, y_prob, labels=None):
         Probabilistic accuracy.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
     
     # Calculates the probabilistic accuracy
     TP_sum = np.sum(np.diag(prob_conf_matrix))
@@ -285,7 +383,7 @@ def prob_accuracy_score(y_true, y_prob, labels=None):
 
     return prob_acc
 
-def prob_balanced_accuracy_score(y_true, y_prob, labels=None):
+def prob_balanced_accuracy_score(y_true, y_score, labels=None):
     """
     Compute the probabilistic balanced accuracy.
 
@@ -313,12 +411,12 @@ def prob_balanced_accuracy_score(y_true, y_prob, labels=None):
         Probabilistic balanced accuracy.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Checks labels list
     if labels is None:
@@ -344,7 +442,7 @@ def prob_balanced_accuracy_score(y_true, y_prob, labels=None):
 
     return prob_b_acc
 
-def prob_cohen_kappa_score(y_true, y_prob, labels=None):
+def prob_cohen_kappa_score(y_true, y_score, labels=None):
     """
     Compute the probabilistic Cohen Kappa.
 
@@ -372,9 +470,9 @@ def prob_cohen_kappa_score(y_true, y_prob, labels=None):
         Probabilistic Cohen Kappa.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Checks labels list
     if labels == None:
@@ -389,7 +487,7 @@ def prob_cohen_kappa_score(y_true, y_prob, labels=None):
             labels = np.asarray(labels)
 
     # Calculates the Cohen Kappa
-    y_pred = np.argmax(y_prob, axis=1)
+    y_pred = np.argmax(y_score, axis=1)
     y_pred = np.take(np.unique(y_true), y_pred)
 
     p_o = 0
@@ -398,10 +496,10 @@ def prob_cohen_kappa_score(y_true, y_prob, labels=None):
 
     for i in range(len(y_true)):
         if y_true[i] == y_pred[i]:
-            p_o += (1 + y_prob[i][list(labels).index(y_true[i])])/2
+            p_o += (1 + y_score[i][list(labels).index(y_true[i])])/2
 
         p_aux[list(labels).index(y_true[i])][0] += 1
-        p_aux[list(labels).index(y_true[i])][1] += y_prob[i][list(labels).index(y_true[i])]
+        p_aux[list(labels).index(y_true[i])][1] += y_score[i][list(labels).index(y_true[i])]
     
     p_o /= len(y_true)
     p_aux /= len(y_true)
@@ -413,7 +511,7 @@ def prob_cohen_kappa_score(y_true, y_prob, labels=None):
 
     return prob_cohen_kappa
 
-def prob_matthews_corrcoef(y_true, y_prob, labels=None):
+def prob_matthews_corrcoef(y_true, y_score, labels=None):
     """
     Compute the probabilistic Matthews Correlation Coefficient.
 
@@ -441,12 +539,12 @@ def prob_matthews_corrcoef(y_true, y_prob, labels=None):
         Probabilistic Matthews Correlation Coefficient.
     """
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Calculates the MCC
     TP = np.diag(prob_conf_matrix) 
@@ -458,7 +556,7 @@ def prob_matthews_corrcoef(y_true, y_prob, labels=None):
 
     return prob_m_corrcoef
 
-def prob_precision_score(y_true, y_prob, labels=None, pos_label=1, average="binary"):
+def prob_precision_score(y_true, y_score, labels=None, pos_label=1, average="binary"):
     """
     Compute the probabilistic precision.
 
@@ -497,9 +595,9 @@ def prob_precision_score(y_true, y_prob, labels=None, pos_label=1, average="bina
             raise ValueError("'average' should be 'binary' for binary targets or 'macro', 'micro' or 'weigthed' for multiclass targets.")
    
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Checks labels list
     if labels == None:
@@ -519,7 +617,7 @@ def prob_precision_score(y_true, y_prob, labels=None, pos_label=1, average="bina
         raise ValueError("For binary targets 'average' should be 'binary'.")
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Calculates the probabilistic precision
     TP = np.diag(prob_conf_matrix) 
@@ -551,7 +649,7 @@ def prob_precision_score(y_true, y_prob, labels=None, pos_label=1, average="bina
 
         return np.sum(prob_prec)
 
-def prob_recall_score(y_true, y_prob, labels=None, pos_label=1, average="binary"):
+def prob_recall_score(y_true, y_score, labels=None, pos_label=1, average="binary"):
     """
     Compute the probabilistic recall.
 
@@ -591,9 +689,9 @@ def prob_recall_score(y_true, y_prob, labels=None, pos_label=1, average="binary"
             raise ValueError("'average' should be 'binary' for binary targets or 'macro', 'micro' or 'weigthed' for multiclass targets.")
     
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Checks labels list
     if labels == None:
@@ -613,7 +711,7 @@ def prob_recall_score(y_true, y_prob, labels=None, pos_label=1, average="binary"
         raise ValueError("For binary targets 'average' should be 'binary'.")
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Calculates the probabilistic recall
     TP = np.diag(prob_conf_matrix) 
@@ -646,7 +744,7 @@ def prob_recall_score(y_true, y_prob, labels=None, pos_label=1, average="binary"
 
         return np.sum(prob_rec)
 
-def prob_f1_score(y_true, y_prob, labels=None, pos_label=1, average="binary"):
+def prob_f1_score(y_true, y_score, labels=None, pos_label=1, average="binary"):
     """
     Compute the probabilistic F1-score.
 
@@ -686,9 +784,9 @@ def prob_f1_score(y_true, y_prob, labels=None, pos_label=1, average="binary"):
             raise ValueError("'average' should be 'binary' for binary targets or 'macro', 'micro' or 'weigthed' for multiclass targets.")
     
     # Checks input data type
-    if not isinstance(y_true, np.ndarray) or not isinstance(y_prob, np.ndarray):
+    if not isinstance(y_true, np.ndarray) or not isinstance(y_score, np.ndarray):
         y_true = np.asarray(y_true)
-        y_prob = np.asarray(y_prob)
+        y_score = np.asarray(y_score)
 
     # Checks labels list
     if labels == None:
@@ -708,7 +806,7 @@ def prob_f1_score(y_true, y_prob, labels=None, pos_label=1, average="binary"):
         raise ValueError("For binary targets 'average' should be 'binary'.")
 
     # Computes the probabilistic confusion matrix
-    prob_conf_matrix = prob_confusion_matrix(y_true, y_prob, labels)
+    prob_conf_matrix = prob_confusion_matrix(y_true, y_score, labels)
 
     # Calculates the probabilistic balanced accuracy
     TP = np.diag(prob_conf_matrix) 
