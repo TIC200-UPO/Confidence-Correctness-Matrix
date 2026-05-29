@@ -1,0 +1,113 @@
+Metadata-Version: 2.4
+Name: confidence_correctness_matrix
+Version: 1.0.0
+Summary: Confidence-Correctness Matrix
+Author: Jesús S. Aguilar-Ruiz, Alejandro García Conde
+License: BSD 3-Clause License
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: matplotlib
+Dynamic: author
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+# Confidence-Correctness Matrix
+
+The package provides the methods to provide the confidence-correctness matrix and for its visualization in a horizontal bar chart. The confidence-correctness matrix is an innovative method to understand the behavior of a prediction model for classification problems.
+
+This matrix provides information about the degree of confidence that the classifier has in its own predictions, indicating whether it is robust and reliable or uncertain and doubtful. This method has two variants: the class-independent confidence-correctness matrix and the class-specific confidence-correctness matrix depending on the kind of analysis required.
+
+By analyzing the data provided by them, our goal is to improve the reliability and explainability of prediction models and to provide users with a clearer understanding of why a model has a high or low confidence about its predictions.
+
+## Installation
+
+Serendipity Matrix can be installed from [PyPI](https://pypi.org/project/confidence_correctness_matrix/)
+
+```bash
+pip install confidence_correctness_matrix
+```
+
+Or you can clone the repository and run:
+
+```bash
+pip install .
+```
+
+
+## Sample usage
+
+```python
+import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from ucimlrepo import fetch_ucirepo
+
+# Loads the dataset
+iris  = fetch_ucirepo(id=53) 
+X, y = iris.data.features, iris.data.targets.squeeze()
+
+# Training and predict
+model = GaussianNB().fit(X, y)
+result = model.predict_proba(X)
+
+# Calculates the probabilistic confusion matrix and the probabilistic accuracy
+prob_conf_matrix = prob_confusion_matrix(y, result)
+prob_acc = prob_accuracy(y, result)
+
+print(np.round(prob_conf_matrix,3))
+print(f"Acc*:{np.round(prob_acc,5)}\n")
+
+
+# Calculates the certainty and uncertainty confusion matrix, their probabilistic accuracy and their lambda values
+V, U = certainty_matrix(y, result)
+lambda_V, lambda_U = certainty_weights(y, result)
+
+print(np.round(V,3))
+print(f"Acc_V*:{np.round(V_acc,5)}, lambda_V:{np.round(lambda_V,5)}\n")
+print(np.round(U,3))
+print(f"Acc_U*:{np.round(U_acc,5)}, lambda_U:{np.round(lambda_U,5)}")
+```
+
+## Result sample
+
+### Probabilistic confusion matrix
+| Iris-setosa  |  Iris-versicolor | Iris-virginica |
+|:------------:|:----------------:|:--------------:|
+|      50      |         0        |        0       |
+|      0       |       46.06      |       3.94     |
+|      0       |        3.93      |      46.07     |
+
+Acc* = 0.94754
+
+### High-confidence matrix (H)
+
+| Iris-setosa  |  Iris-versicolor | Iris-virginica |
+|:------------:|:----------------:|:--------------:|
+|      50      |         0        |         0      |
+|       0      |       45.374     |       2.314    |
+|       0      |        2.644     |      45.715    |
+
+lambda_H = 0.97365
+
+### Low-confidence matrix (L)
+
+| Iris-setosa  |  Iris-versicolor | Iris-virginica |
+|:------------:|:----------------:|:--------------:|
+|      0       |          0       |         0      |
+|      0       |        0.686     |       1.626    |
+|      0       |        1.285     |       0.356    |
+
+lambda_L = 0.02635
+
+<!--![Class-specific serendipity matrix](Resources/Example_class-specific_serendipity_matrix_for_wine_dataset.png)-->
+
+## Citation
+
+The methodology is described in detail in:
+
+[1] J. S. Aguilar-Ruiz and A. García Conde, “”<!-- , Scientific Reports, 14:10759, 2024, doi: 10.1038/s41598-024-61365-z. Also, the mathematical background of the multiclass classification performance can be found in: in IEEE Access.-->

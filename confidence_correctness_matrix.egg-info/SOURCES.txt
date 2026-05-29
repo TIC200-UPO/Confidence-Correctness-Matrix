@@ -1,0 +1,10 @@
+LICENSE
+README.md
+setup.py
+confidence_correctness_matrix/__init__.py
+confidence_correctness_matrix/confidence_correctness_matrix.py
+confidence_correctness_matrix.egg-info/PKG-INFO
+confidence_correctness_matrix.egg-info/SOURCES.txt
+confidence_correctness_matrix.egg-info/dependency_links.txt
+confidence_correctness_matrix.egg-info/requires.txt
+confidence_correctness_matrix.egg-info/top_level.txt
