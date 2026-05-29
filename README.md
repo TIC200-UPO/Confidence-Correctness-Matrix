@@ -1,10 +1,25 @@
-# Probabilistic-Framework
+# Confidence-Correctness Matrix
 
-Pendiente
+The package provides the methods to provide the confidence-correctness matrix and for its visualization in a horizontal bar chart. The confidence-correctness matrix is an innovative method to understand the behavior of a prediction model for classification problems.
+
+This matrix provides information about the degree of confidence that the classifier has in its own predictions, indicating whether it is robust and reliable or uncertain and doubtful. This method has two variants: the class-independent confidence-correctness matrix and the class-specific confidence-correctness matrix depending on the kind of analysis required.
+
+By analyzing the data provided by them, our goal is to improve the reliability and explainability of prediction models and to provide users with a clearer understanding of why a model has a high or low confidence about its predictions.
 
 ## Installation
 
-Pendiente
+Serendipity Matrix can be installed from [PyPI](https://pypi.org/project/confidence_correctness_matrix/)
+
+```bash
+pip install confidence_correctness_matrix
+```
+
+Or you can clone the repository and run:
+
+```bash
+pip install .
+```
+
 
 ## Sample usage
 
@@ -48,9 +63,9 @@ print(f"Acc_U*:{np.round(U_acc,5)}, lambda_U:{np.round(lambda_U,5)}")
 |      0       |       46.06      |       3.94     |
 |      0       |        3.93      |      46.07     |
 
-Acc*:0.94754
+Acc* = 0.94754
 
-### Certainty matrix (V)
+### High-confidence matrix (H)
 
 | Iris-setosa  |  Iris-versicolor | Iris-virginica |
 |:------------:|:----------------:|:--------------:|
@@ -58,9 +73,9 @@ Acc*:0.94754
 |       0      |       45.374     |       2.314    |
 |       0      |        2.644     |      45.715    |
 
-lambda_V:0.97365
+lambda_H = 0.97365
 
-### Uncertainty matrix (U)
+### Low-confidence matrix (L)
 
 | Iris-setosa  |  Iris-versicolor | Iris-virginica |
 |:------------:|:----------------:|:--------------:|
@@ -68,8 +83,12 @@ lambda_V:0.97365
 |      0       |        0.686     |       1.626    |
 |      0       |        1.285     |       0.356    |
 
-lambda_U:0.02635
+lambda_L = 0.02635
+
+<!--![Class-specific serendipity matrix](Resources/Example_class-specific_serendipity_matrix_for_wine_dataset.png)-->
 
 ## Citation
 
-Pendiente
+The methodology is described in detail in:
+
+[1] J. S. Aguilar-Ruiz and A. García Conde, “”<!-- , Scientific Reports, 14:10759, 2024, doi: 10.1038/s41598-024-61365-z. Also, the mathematical background of the multiclass classification performance can be found in: in IEEE Access.-->
