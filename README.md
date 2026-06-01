@@ -119,3 +119,7 @@ lambda_L = 0.02635
 The methodology is described in detail in:
 
 [1] J. S. Aguilar-Ruiz and A. García Conde, “”<!-- , Scientific Reports, 14:10759, 2024, doi: 10.1038/s41598-024-61365-z. Also, the mathematical background of the multiclass classification performance can be found in: in IEEE Access.-->
+
+## Documentation
+
+Full documentation is available [here](https://tic200-upo.github.io/Confidence-Correctness-Matrix/).
