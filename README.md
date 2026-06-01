@@ -33,7 +33,9 @@ iris  = fetch_ucirepo(id=53)
 X, y = iris.data.features, iris.data.targets.squeeze()
 
 classes = np.unique(y)
-print(classes)
+print(f"Classes: {classes}\n")
+
+np.set_printoptions(suppress=True, formatter={'float': '{: 0.3f}'.format})
 
 # Training and predict
 model = GaussianNB().fit(X, y)
@@ -49,26 +51,34 @@ prob_f1 = prob_f1_score(y, result, average="weighted")
 prob_cohen_kappa = prob_cohen_kappa_score(y, result)
 prob_m_corrcoef = prob_matthews_corrcoef(y, result)
 
-print(np.round(prob_conf_matrix,3))
-print(f"Acc* = {np.round(prob_acc,5)}, B_acc* = {np.round(prob_b_acc,5)}, Prec* = {np.round(prob_prec,5)}, MCC* = {np.round(prob_m_corrcoef,5)}")
-print(f"Recall* = {np.round(prob_recall,5)}, F1* = {np.round(prob_f1,5)}, Cohen Kappa* = {np.round(prob_cohen_kappa,5)}\n")
+print(f"Probabilistic confusion matrix:\n {prob_conf_matrix}\n")
+print(f"Acc* = {prob_acc:.3f}, B_acc* = {prob_b_acc:.3f}, Prec* = {prob_prec:.3f}, MCC* = {prob_m_corrcoef:.3f}, Recall* = {prob_recall:.3f}, F1* = {prob_f1:.3f}, Cohen Kappa* = {prob_cohen_kappa:.3f}\n")
 
 # Calculates the high-confidence and low-confidence matrices and their lambda values
 H, L = confidence_matrices(y, result)
 lambda_H, lambda_L = confidence_weights(y, result)
 
-print(np.round(H,3))
-print(f"lambda_H = {np.round(lambda_H,5)}\n")
-print(np.round(L,3))
-print(f"lambda_L = {np.round(lambda_L,5)}")
+print(f"High-Confidence matrix:\n {H}")
+print(f"lambda_H = {lambda_H:.3f}\n")
+print(f"Low-Confidence matrix:\n {L}")
+print(f"lambda_L = {lambda_L:.3f}\n")
 
-# Calculates the class-independent confidence-correctness matrix
+# Calculates the class-independent Confidence-Correctnes matrix
 ci_confCorrM = confidence_correctness_matrix(y, result, class_dependent=False)
-print(ci_confCorrM)
+print("Class-independent Confidence-Correctnes matrix values:")
+for key, value in ci_confCorrM.items():
+    print(f"{key}: {value:.3f}")
 
-# Calculates the class-independent confidence-correctness matrix
+# Calculates the class-dependent Confidence-Correctnes matrix
 cd_confCorrM = confidence_correctness_matrix(y, result, class_dependent=True)
-print(cd_confCorrM)
+print("\nClass-dependent Confidence-Correctnes matrix values:")
+for key, value in cd_confCorrM.items():
+    print(f"Class {key}")
+    for key2, value2 in value.items():
+        print(f"{key2}: {value2:.3f}")
+
+# Plots the class-dependent Confidence-Correctnes matrix
+plot_confidence(y, result)
 ```
 
 ## Result sample
