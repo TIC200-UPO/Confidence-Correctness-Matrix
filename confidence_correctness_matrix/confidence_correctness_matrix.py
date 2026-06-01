@@ -109,7 +109,7 @@ def prob_confusion_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8):
 
 def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8, class_dependent=False):
     """
-    Calculate the confidence-correctness matrix in its class-independent or class-dependent versions.
+    Calculate the Confidence-Correctnes matrix in its class-independent or class-dependent versions.
 
     Parameters
     ----------
@@ -134,8 +134,8 @@ def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e
 
     class-dependent : boolean, default=False.
         
-        If 'False', the class-independent confidence-correctness matrix is computed, and
-        if 'True', the class-dependent confidence-correctness matrix is computed.
+        If 'False', the class-independent Confidence-Correctnes matrix is computed, and
+        if 'True', the class-dependent Confidence-Correctnes matrix is computed.
 
     Returns
     ----------
@@ -340,6 +340,109 @@ def confidence_weights(y_true, y_score, labels=None):
     lambda_L = np.sum(L)/np.sum(prob_conf_matrix)
 
     return lambda_H, lambda_L
+
+def plot_confidence(y_true, y_score, output_fig_path = None):
+    """
+    Plots and shows the Confidence-Correctnes matrix horizontal bar chart and saves them in format .png.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,). 
+        Ground truth (correct) labels.
+
+    y_score : array-like of shape (n_samples, n_classes).
+        Probabilities of predicted labels, as returned by a classifier. The sum of 
+        these probabilities must sum up to 1.0 over classes.
+
+        The order of the class scores must correspond to the numerical or
+        lexicographical order of the labels in y_true.
+
+    output_fig_path : if given, figure will be saved at this location. If no file extension is given,
+        png will be used by default, default=None.
+    """
+    if output_fig_path is not None:
+        if type(output_fig_path) is not str:
+            raise ValueError("Given path should be a string.")
+    
+    # Checks y_true data type
+    if not isinstance(y_true, np.ndarray):
+        y_true = y_true.to_numpy()
+
+    # Classes of the test
+    classes = np.unique(y_true)
+    
+    confidence = ["Reliability","Overconfidence","Underconfidence","Ambiguity"]
+
+    # Computes the serendipity matrix and orders the matrix by the reliability
+    serendipityM = confidence_correctness_matrix(y_true, y_score, class_dependent=True)
+    serendipityM = np.array(list(serendipityM.values()))
+
+    data = np.zeros((len(confidence), len(classes)))
+    for n1, k in enumerate(serendipityM):
+        for n2, v in enumerate(k.values()):
+            data[n2][n1] += v
+
+    order = np.argsort(data[0])
+    data = data[:, order]
+    classes = classes[order]
+
+    # Variable declaration for a suitable format (ax2 + bx + c)
+    if output_fig_path == None:
+        plt.figure(figsize=(12, max(4,len(classes)*0.4)))
+        pos = -0.00017 * len(classes)**2 + 0.0094 * len(classes) - 0.177
+        height = 0.05
+        pad = 10
+        y_axis_p = 0.1
+        y_axis_margin = 0.05
+        y_lim_l = 0
+        y_lim_r = 0
+    else:
+        plt.figure(figsize=(14, len(classes)*0.5))
+        pos = -0.00078 * len(classes)**2 + 0.036 * len(classes) - 0.431
+        height = 0.2
+        pad = 35
+        y_axis_p = 0.25
+        y_axis_margin = 0.15
+        y_lim_l = 0
+        y_lim_r = 0.05
+
+    # Sets the size of the axis
+    y_axis = np.arange(y_axis_margin, len(classes)*y_axis_p + y_axis_margin, len(classes)*y_axis_p/len(classes))
+    x_axis = np.linspace(-1, 1, 21)
+    ymin, ymax = plt.ylim(y_lim_l, len(classes)*y_axis_p + y_lim_r)
+    plt.xlim(-1.01, 1.01)
+
+    # Plots the data
+    plt.title("Confidence-Correctnes Matrix", fontdict={'color': 'black', 'weight': 'bold'}, pad=pad)
+    plt.barh(y_axis, data[0], color="#4AB071", label="Reliability", height=height)     
+    plt.barh(y_axis, -data[1], color='#348FA7', label='Overconfidence', height=height)
+    plt.barh(y_axis, data[2], left=data[0], color='#FF4F47', label='Ambiguity', height=height)
+    plt.barh(y_axis, -data[3], left=-data[1], color='#DB8838', label="Underconfidence", height=height)     
+    
+    # Sets the style of the chart
+    plt.xticks(ticks=np.linspace(-1, 1, 21), labels=["1","0.9","0.8","0.7","0.6","0.5","0.4","0.3","0.2","0.1","0","0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"])
+    plt.yticks(y_axis, classes)
+    plt.gca().xaxis.set_label_position("top")
+    plt.gca().xaxis.set_ticks_position("top")
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['bottom'].set_visible(False)
+    plt.gca().spines['left'].set_visible(False)
+    plt.tick_params(axis='both', which='both', colors="#4F4F4F", length=0)
+
+    for x in x_axis:
+        plt.vlines(x=x, ymin=ymin, ymax=ymax, colors='#CDCDCD', linewidth=1)
+
+    # Sets the legend of the chart
+    plt.legend(loc='lower center', bbox_to_anchor=(0.5, pos), ncol=4, frameon=False, fontsize=8.5)
+
+    # Shows the chart or saves it on the gived path
+    if output_fig_path == None:
+        plt.tight_layout()
+        plt.show()
+    else:
+        plt.savefig(output_fig_path, bbox_inches="tight", dpi=300)
+        plt.close()
 
 def prob_accuracy_score(y_true, y_score, labels=None):
     """
