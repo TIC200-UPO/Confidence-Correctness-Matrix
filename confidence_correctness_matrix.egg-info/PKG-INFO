@@ -1,0 +1,128 @@
+Metadata-Version: 2.4
+Name: confidence_correctness_matrix
+Version: 1.0.0
+Summary: Confidence-Correctness Matrix
+Author: Jesús S. Aguilar-Ruiz, Alejandro García Conde
+License: BSD 3-Clause License
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Dynamic: author
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+# Confidence-Correctness Matrix
+
+The package provides the methods for building the confidence-correctness matrix, for its visualization in a horizontal bar chart and for computing different probabilistic metrics. The confidence-correctness matrix is an innovative method to understand the behavior of a prediction model for classification problems.
+
+This matrix provides information about the degree of confidence that the classifier has in its own predictions, indicating whether it is robust and reliable or uncertain and doubtful. This method has two variants: the class-independent confidence-correctness matrix and the class-specific confidence-correctness matrix depending on the kind of analysis required.
+
+By analyzing the data provided by them, our goal is to improve the reliability and explainability of prediction models and to provide users with a clearer understanding of why a model has a high or low confidence about its predictions.
+
+## Installation
+
+Serendipity Matrix can be installed from [PyPI](https://pypi.org/project/confidence_correctness_matrix/)
+
+```bash
+pip install confidence_correctness_matrix
+```
+
+Or you can clone the repository and run:
+
+```bash
+pip install .
+```
+
+## Sample usage
+
+```python
+import numpy as np
+from sklearn.naive_bayes import GaussianNB
+from ucimlrepo import fetch_ucirepo
+
+wine_quality  = fetch_ucirepo(id=186) 
+X, y = wine_quality.data.features, wine_quality.data.targets.squeeze()
+
+model = GaussianNB().fit(X, y)
+y_score = model.predict_proba(X)
+
+prob_conf_matrix = prob_confusion_matrix(y, y_score, labels=classes)
+prob_acc = prob_accuracy_score(y, y_score)
+prob_f1 = prob_f1_score(y, y_score, average="weighted")
+
+H, L = confidence_matrices(y, y_score)
+lambda_H, lambda_L = confidence_weights(y, y_score)
+
+ci_confCorrM = confidence_correctness_matrix(y, y_score, class_specific=False)
+cd_confCorrM = confidence_correctness_matrix(y, y_score, class_specific=True)
+
+plot_confidence(y, y_score)
+```
+
+## Result sample
+
+### Probabilistic confusion matrix
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   7.326   |  4.157   | 8.464   | 5.745    | 3.465   | 0.739   | 0.105  |
+|   5.758   |  32.200  | 77.154  | 65.088   | 29.853  | 5.903   | 0.044  |
+|   35.056  |  152.778 | 962.883 | 712.176  | 224.441 | 49.411  | 1.255  |
+|   21.996  |  133.093 | 762.035 | 1052.585 | 666.841 | 186.117 | 13.332 |
+|   6.634   |  26.902  | 126.184 | 354.470  | 412.575 | 136.295 | 15.940 |
+|   0.806   |  2.252   | 16.814  | 59.407   | 78.563  | 32.730  | 2.428  |
+|   0.000   |  0.006   | 0.284   | 0.898    | 1.768   | 0.656   | 1.388  |
+
+### High-confidence matrix (H)
+
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   5.630   |   3.210  |   5.427 |  3.515   | 2.311   |  0.000  |  0.000 |
+|   3.273   |   19.069 |  53.953 |  34.875  | 12.662  |  0.523  |  0.000 |
+|   22.306  |   45.560 | 749.197 |  355.999 | 77.808  |  0.000  |  0.000 |
+|   8.671   |   49.071 | 469.016 |  613.298 | 410.956 |  2.451  |  1.674 |
+|   4.019   |   10.416 |  64.527 |  173.799 | 322.593 |  4.335  |  2.288 |
+|   0.000   |   0.884  |   9.803 |  26.282  | 62.678  |  4.403  |  0.781 |
+|   0.000   |  0.000   |   0.000 |  0.525   | 1.011   |  0.000  |  1.086 |
+
+lambda_H = 0.560
+
+### Low-confidence matrix (L)
+
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   1.696   |  0.948   | 3.037   | 2.229    | 1.154   | 0.739   |  0.105 |
+|   2.486   |  13.131  | 23.201  | 30.213   | 17.191  | 5.380   |  0.044 |
+|   12.751  |  107.218 | 213.686 | 356.177  | 146.633 | 49.411  |  1.255 |
+|   13.325  |  84.022  | 293.019 | 439.287  | 255.885 | 183.666 |  11.658|
+|   2.614   |  16.486  | 61.658  | 180.671  | 89.982  | 131.960 |  13.652|
+|   0.806   |  1.368   | 7.011   | 33.125   | 15.884  | 28.328  |  1.647 |
+|   0.000   |  0.006   | 0.284   | 0.374    | 0.758   | 0.656   |  0.302 |
+
+lambda_L = 0.440
+
+### Confident-Correctness matrix
+
+|                             | High-confidence | Low-confidence |  
+|:---------------------------:|:---------------:|:--------------:|
+|  Prob. mass on True class   |      0.264      |      0.121     |
+| Prob. mass on Other classes |      0.296      |      0.319     |
+
+### Class-specific Confidence-Correctness Matrix horizontal bar chart
+![Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_wine.png)
+
+For more detailed examples, please refer to the following [link](https://tic200-upo.github.io/Confidence-Correctness-Matrix/example.html).
+
+## Citation
+
+The methodology is described in detail in:
+
+[1] J. S. Aguilar-Ruiz and A. García Conde, “”<!-- , Scientific Reports, 14:10759, 2024, doi: 10.1038/s41598-024-61365-z. Also, the mathematical background of the multiclass classification performance can be found in: in IEEE Access.-->
+
+## Documentation
+
+Full documentation is available [here](https://tic200-upo.github.io/Confidence-Correctness-Matrix/).

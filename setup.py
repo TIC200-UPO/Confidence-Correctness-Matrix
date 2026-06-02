@@ -5,7 +5,7 @@ HERE = pathlib.Path(__file__).parent
 
 setup(
     name = 'confidence_correctness_matrix',
-    version = '1.0.0',
+    version = '1.0.1',
     author = 'Jesús S. Aguilar-Ruiz, Alejandro García Conde',
     #author_email=,
     description = 'Confidence-Correctness Matrix',
