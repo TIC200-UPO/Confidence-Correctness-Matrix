@@ -23,5 +23,5 @@ Or you can clone the repository and run:
    :maxdepth: 1
    :caption: Contents:
 
-   Examples of usage <./example.rst>
+   Examples of usage <./confidence_correctness_examples.ipynb>
    Code documentation <./documentation.rst>
