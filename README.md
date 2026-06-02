@@ -1,6 +1,6 @@
 # Confidence-Correctness Matrix
 
-The package provides the methods to provide the confidence-correctness matrix and for its visualization in a horizontal bar chart. The confidence-correctness matrix is an innovative method to understand the behavior of a prediction model for classification problems.
+The package provides the methods for building the confidence-correctness matrix, for its visualization in a horizontal bar chart and for computing different probabilistic metrics. The confidence-correctness matrix is an innovative method to understand the behavior of a prediction model for classification problems.
 
 This matrix provides information about the degree of confidence that the classifier has in its own predictions, indicating whether it is robust and reliable or uncertain and doubtful. This method has two variants: the class-independent confidence-correctness matrix and the class-specific confidence-correctness matrix depending on the kind of analysis required.
 
@@ -20,7 +20,6 @@ Or you can clone the repository and run:
 pip install .
 ```
 
-
 ## Sample usage
 
 ```python
@@ -28,57 +27,23 @@ import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from ucimlrepo import fetch_ucirepo
 
-# Loads the dataset
 iris  = fetch_ucirepo(id=53) 
 X, y = iris.data.features, iris.data.targets.squeeze()
 
-classes = np.unique(y)
-print(f"Classes: {classes}\n")
-
-np.set_printoptions(suppress=True, formatter={'float': '{: 0.3f}'.format})
-
-# Training and predict
 model = GaussianNB().fit(X, y)
-result = model.predict_proba(X)
+y_score = model.predict_proba(X)
 
-# Calculates the probabilistic confusion matrix and the probabilistic metrics
-prob_conf_matrix = prob_confusion_matrix(y, result, labels=classes)
-prob_acc = prob_accuracy_score(y, result)
-prob_b_acc = prob_balanced_accuracy_score(y, result)
-prob_prec = prob_precision_score(y, result, average="micro")
-prob_recall = prob_recall_score(y, result, average="macro")
-prob_f1 = prob_f1_score(y, result, average="weighted")
-prob_cohen_kappa = prob_cohen_kappa_score(y, result)
-prob_m_corrcoef = prob_matthews_corrcoef(y, result)
+prob_conf_matrix = prob_confusion_matrix(y, y_score, labels=classes)
+prob_acc = prob_accuracy_score(y, y_score)
+prob_f1 = prob_f1_score(y, y_score, average="weighted")
 
-print(f"Probabilistic confusion matrix:\n {prob_conf_matrix}\n")
-print(f"Acc* = {prob_acc:.3f}, B_acc* = {prob_b_acc:.3f}, Prec* = {prob_prec:.3f}, MCC* = {prob_m_corrcoef:.3f}, Recall* = {prob_recall:.3f}, F1* = {prob_f1:.3f}, Cohen Kappa* = {prob_cohen_kappa:.3f}\n")
+H, L = confidence_matrices(y, y_score)
+lambda_H, lambda_L = confidence_weights(y, y_score)
 
-# Calculates the high-confidence and low-confidence matrices and their lambda values
-H, L = confidence_matrices(y, result)
-lambda_H, lambda_L = confidence_weights(y, result)
+ci_confCorrM = confidence_correctness_matrix(y, y_score, class_specific=False)
+cd_confCorrM = confidence_correctness_matrix(y, y_score, class_specific=True)
 
-print(f"High-Confidence matrix:\n {H}")
-print(f"lambda_H = {lambda_H:.3f}\n")
-print(f"Low-Confidence matrix:\n {L}")
-print(f"lambda_L = {lambda_L:.3f}\n")
-
-# Calculates the class-independent Confidence-Correctnes matrix
-ci_confCorrM = confidence_correctness_matrix(y, result, class_dependent=False)
-print("Class-independent Confidence-Correctnes matrix values:")
-for key, value in ci_confCorrM.items():
-    print(f"{key}: {value:.3f}")
-
-# Calculates the class-dependent Confidence-Correctnes matrix
-cd_confCorrM = confidence_correctness_matrix(y, result, class_dependent=True)
-print("\nClass-dependent Confidence-Correctnes matrix values:")
-for key, value in cd_confCorrM.items():
-    print(f"Class {key}")
-    for key2, value2 in value.items():
-        print(f"{key2}: {value2:.3f}")
-
-# Plots the class-dependent Confidence-Correctnes matrix
-plot_confidence(y, result)
+plot_confidence(y, y_score)
 ```
 
 ## Result sample
@@ -89,8 +54,6 @@ plot_confidence(y, result)
 |      50      |         0        |        0       |
 |      0       |       46.06      |       3.94     |
 |      0       |        3.93      |      46.07     |
-
-Acc* = 0.94754
 
 ### High-confidence matrix (H)
 
@@ -112,7 +75,17 @@ lambda_H = 0.97365
 
 lambda_L = 0.02635
 
-<!--![Class-specific serendipity matrix](Resources/Example_class-specific_serendipity_matrix_for_wine_dataset.png)-->
+### Confident-Correctness matrix
+
+|                             |:---------------:| High-confidence | Low-confidence |  
+|:---------------------------:|:---------------:|:---------------:|:--------------:|
+|  Prob. mass on True class   |:---------------:|      0.941      |      0.007     |
+| Prob. mass on Other classes |:---------------:|      0.033      |      0.019     |
+
+### Class-specific Confidence-Correctness Matrix horizontal bar chart
+[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_iris.pdf)
+
+For more detailed examples, please refer to the following [link](https://tic200-upo.github.io/Confidence-Correctness-Matrix/example.html).
 
 ## Citation
 
