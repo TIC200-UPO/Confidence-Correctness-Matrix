@@ -77,13 +77,14 @@ lambda_L = 0.02635
 
 ### Confident-Correctness matrix
 
-|                             |:---------------:| High-confidence | Low-confidence |  
-|:---------------------------:|:---------------:|:---------------:|:--------------:|
-|  Prob. mass on True class   |:---------------:|      0.941      |      0.007     |
-| Prob. mass on Other classes |:---------------:|      0.033      |      0.019     |
+|                             | High-confidence | Low-confidence |  
+|:---------------------------:|:---------------:|:--------------:|
+|  Prob. mass on True class   |      0.941      |      0.007     |
+|:---------------------------:|:---------------:|:--------------:|
+| Prob. mass on Other classes |      0.033      |      0.019     |
 
 ### Class-specific Confidence-Correctness Matrix horizontal bar chart
-[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_iris.pdf)
+[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_iris.png)
 
 For more detailed examples, please refer to the following [link](https://tic200-upo.github.io/Confidence-Correctness-Matrix/example.html).
 
