@@ -1,7 +1,9 @@
 from .confidence_correctness_matrix import (
     prob_confusion_matrix,
+    confidence_correctness_matrix,
     confidence_matrices,
     confidence_weights,
+    plot_confidence,
     prob_accuracy_score,
     prob_balanced_accuracy_score,
     prob_cohen_kappa_score,
@@ -13,8 +15,10 @@ from .confidence_correctness_matrix import (
 
 __all__ = [
     "prob_confusion_matrix",
+    "confidence_correctness_matrix",
     "confidence_matrices",
     "confidence_weights",
+    "plot_confidence",
     "prob_accuracy_score",
     "prob_balanced_accuracy_score",
     "prob_cohen_kappa_score",
