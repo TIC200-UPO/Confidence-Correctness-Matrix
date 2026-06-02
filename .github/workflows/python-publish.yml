@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: docker://pandoc/core:3.8
         with:
-          args: "--help" # gets appended to pandoc command
+          args: "--help" 
           
   publish:
     name: Build and Publish to PyPI
