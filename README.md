@@ -27,8 +27,8 @@ import numpy as np
 from sklearn.naive_bayes import GaussianNB
 from ucimlrepo import fetch_ucirepo
 
-iris  = fetch_ucirepo(id=53) 
-X, y = iris.data.features, iris.data.targets.squeeze()
+wine_quality  = fetch_ucirepo(id=186) 
+X, y = wine_quality.data.features, wine_quality.data.targets.squeeze()
 
 model = GaussianNB().fit(X, y)
 y_score = model.predict_proba(X)
@@ -49,41 +49,53 @@ plot_confidence(y, y_score)
 ## Result sample
 
 ### Probabilistic confusion matrix
-| Iris-setosa  |  Iris-versicolor | Iris-virginica |
-|:------------:|:----------------:|:--------------:|
-|      50      |         0        |        0       |
-|      0       |       46.06      |       3.94     |
-|      0       |        3.93      |      46.07     |
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   7.326   |  4.157   | 8.464   | 5.745    | 3.465   | 0.739   | 0.105  |
+|   5.758   |  32.200  | 77.154  | 65.088   | 29.853  | 5.903   | 0.044  |
+|   35.056  |  152.778 | 962.883 | 712.176  | 224.441 | 49.411  | 1.255  |
+|   21.996  |  133.093 | 762.035 | 1052.585 | 666.841 | 186.117 | 13.332 |
+|   6.634   |  26.902  | 126.184 | 354.470  | 412.575 | 136.295 | 15.940 |
+|   0.806   |  2.252   | 16.814  | 59.407   | 78.563  | 32.730  | 2.428  |
+|   0.000   |  0.006   | 0.284   | 0.898    | 1.768   | 0.656   | 1.388  |
 
 ### High-confidence matrix (H)
 
-| Iris-setosa  |  Iris-versicolor | Iris-virginica |
-|:------------:|:----------------:|:--------------:|
-|      50      |         0        |         0      |
-|       0      |       45.374     |       2.314    |
-|       0      |        2.644     |      45.715    |
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   5.630   |   3.210  |   5.427 |  3.515   | 2.311   |  0.000  |  0.000 |
+|   3.273   |   19.069 |  53.953 |  34.875  | 12.662  |  0.523  |  0.000 |
+|   22.306  |   45.560 | 749.197 |  355.999 | 77.808  |  0.000  |  0.000 |
+|   8.671   |   49.071 | 469.016 |  613.298 | 410.956 |  2.451  |  1.674 |
+|   4.019   |   10.416 |  64.527 |  173.799 | 322.593 |  4.335  |  2.288 |
+|   0.000   |   0.884  |   9.803 |  26.282  | 62.678  |  4.403  |  0.781 |
+|   0.000   |  0.000   |   0.000 |  0.525   | 1.011   |  0.000  |  1.086 |
 
-lambda_H = 0.97365
+lambda_H = 0.560
 
 ### Low-confidence matrix (L)
 
-| Iris-setosa  |  Iris-versicolor | Iris-virginica |
-|:------------:|:----------------:|:--------------:|
-|      0       |          0       |         0      |
-|      0       |        0.686     |       1.626    |
-|      0       |        1.285     |       0.356    |
+|      3    |     4    |    5    |    6     |     7   |    8    |    9   |
+|:---------:|:--------:|:-------:|:--------:|:-------:|:-------:|:------:|
+|   1.696   |  0.948   | 3.037   | 2.229    | 1.154   | 0.739   |  0.105 |
+|   2.486   |  13.131  | 23.201  | 30.213   | 17.191  | 5.380   |  0.044 |
+|   12.751  |  107.218 | 213.686 | 356.177  | 146.633 | 49.411  |  1.255 |
+|   13.325  |  84.022  | 293.019 | 439.287  | 255.885 | 183.666 |  11.658|
+|   2.614   |  16.486  | 61.658  | 180.671  | 89.982  | 131.960 |  13.652|
+|   0.806   |  1.368   | 7.011   | 33.125   | 15.884  | 28.328  |  1.647 |
+|   0.000   |  0.006   | 0.284   | 0.374    | 0.758   | 0.656   |  0.302 |
 
-lambda_L = 0.02635
+lambda_L = 0.440
 
 ### Confident-Correctness matrix
 
 |                             | High-confidence | Low-confidence |  
 |:---------------------------:|:---------------:|:--------------:|
-|  Prob. mass on True class   |      0.941      |      0.007     |
-| Prob. mass on Other classes |      0.033      |      0.019     |
+|  Prob. mass on True class   |      0.264      |      0.121     |
+| Prob. mass on Other classes |      0.296      |      0.319     |
 
 ### Class-specific Confidence-Correctness Matrix horizontal bar chart
-[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_iris.png)
+[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_wine.png)
 
 For more detailed examples, please refer to the following [link](https://tic200-upo.github.io/Confidence-Correctness-Matrix/example.html).
 
