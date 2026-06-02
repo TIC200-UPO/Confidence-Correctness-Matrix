@@ -95,7 +95,7 @@ lambda_L = 0.440
 | Prob. mass on Other classes |      0.296      |      0.319     |
 
 ### Class-specific Confidence-Correctness Matrix horizontal bar chart
-[Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_wine.png)
+![Class-specific Confidence-Correctness matrix](resources/example_confidence_correctness_wine.png)
 
 For more detailed examples, please refer to the following [link](https://tic200-upo.github.io/Confidence-Correctness-Matrix/example.html).
 
