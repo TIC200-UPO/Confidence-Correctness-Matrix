@@ -107,9 +107,9 @@ def prob_confusion_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8):
 
     return prob_conf_matrix
 
-def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8, class_dependent=False):
+def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e-8, class_specific=False):
     """
-    Calculate the Confidence-Correctnes matrix in its class-independent or class-dependent versions.
+    Calculate the Confidence-Correctnes matrix in its class-independent or class-specific versions.
 
     Parameters
     ----------
@@ -135,12 +135,12 @@ def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e
     class-dependent : boolean, default=False.
         
         If 'False', the class-independent Confidence-Correctnes matrix is computed, and
-        if 'True', the class-dependent Confidence-Correctnes matrix is computed.
+        if 'True', the class-specific Confidence-Correctnes matrix is computed.
 
     Returns
     ----------
-    confCorrM : pandas DataFrame.
-        Returns the values of the serendipity matrix.
+    confCorrM : dictionary.
+        Confidence-Correctness matrix.
     """
     if y_true.shape[0] != y_score.shape[0]:
         raise ValueError("'y_true' and 'y_score' have different number of samples.")
@@ -174,39 +174,39 @@ def confidence_correctness_matrix(y_true, y_score, labels=None, abs_tolerance=1e
 
     confidence = ["Reliability","Overconfidence","Underconfidence","Ambiguity"]
 
-    if class_dependent == False:
+    if class_specific == False:
         tam = y_true.shape[0]
 
         # Decomposes the y_score probabilistic matrix into certainty and uncertainty
         H, L = confidence_matrices(y_true, y_score)
 
-        # Computes the serendipity matrix
+        # Computes the Confidence-Correctness matrix
         H_acc = np.trace(H)
         H_inacc = np.sum (H) - np.trace(H)
         L_inacc = np.trace(L)
         L_acc = np.sum (L) - np.trace(L)
 
-        serendipityM = np.array([H_acc, H_inacc, L_acc, L_inacc])
-        serendipityM[serendipityM < 0] = 0
+        confCorrM = np.array([H_acc, H_inacc, L_acc, L_inacc])
+        confCorrM[confCorrM < 0] = 0
 
-        serendipityM = dict(zip(confidence, serendipityM/tam))
+        confCorrM = dict(zip(confidence, confCorrM/tam))
     else:
         # Decomposes the y_score probabilistic matrix into certainty and uncertainty
         H, L = confidence_matrices(y_true, y_score)
           
-        serendipityM = {key: {} for key in labels}
+        confCorrM = {key: {} for key in labels}
 
-        # Computes the serendipity matrix by class
+        # Computes the Confidence-Correctness matrix by class
         for i in range(H.shape[0]):
             sum = np.sum(H[i,:], axis=0) + np.sum(L[i,:], axis=0)
             
             if sum != 0:
-                serendipityM[labels[i]]["Reliability"] = H[i][i]/sum
-                serendipityM[labels[i]]["Overconfidence"] = (np.sum(H[i,:], axis=0) - H[i][i])/sum
-                serendipityM[labels[i]]["Ambiguity"] = L[i][i]/sum
-                serendipityM[labels[i]]["Underconfidence"] = (np.sum(L[i,:], axis=0) - L[i][i])/sum
+                confCorrM[labels[i]]["Reliability"] = H[i][i]/sum
+                confCorrM[labels[i]]["Overconfidence"] = (np.sum(H[i,:], axis=0) - H[i][i])/sum
+                confCorrM[labels[i]]["Ambiguity"] = L[i][i]/sum
+                confCorrM[labels[i]]["Underconfidence"] = (np.sum(L[i,:], axis=0) - L[i][i])/sum
 
-    return serendipityM
+    return confCorrM
 
 
 def confidence_matrices(y_true, y_score, labels=None, abs_tolerance=1e-8):
@@ -373,12 +373,12 @@ def plot_confidence(y_true, y_score, output_fig_path = None):
     
     confidence = ["Reliability","Overconfidence","Underconfidence","Ambiguity"]
 
-    # Computes the serendipity matrix and orders the matrix by the reliability
-    serendipityM = confidence_correctness_matrix(y_true, y_score, class_dependent=True)
-    serendipityM = np.array(list(serendipityM.values()))
+    # Computes the Confidence-Correctness matrix and orders the matrix by the reliability
+    confCorrM = confidence_correctness_matrix(y_true, y_score, class_specific=True)
+    confCorrM = np.array(list(confCorrM.values()))
 
     data = np.zeros((len(confidence), len(classes)))
-    for n1, k in enumerate(serendipityM):
+    for n1, k in enumerate(confCorrM):
         for n2, v in enumerate(k.values()):
             data[n2][n1] += v
 
