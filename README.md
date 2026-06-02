@@ -78,6 +78,7 @@ lambda_L = 0.02635
 ### Confident-Correctness matrix
 
 |                             | High-confidence | Low-confidence |  
+|:---------------------------:|:---------------:|:--------------:|
 |  Prob. mass on True class   |      0.941      |      0.007     |
 | Prob. mass on Other classes |      0.033      |      0.019     |
 
