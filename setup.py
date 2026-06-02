@@ -15,6 +15,6 @@ setup(
     packages=["confidence_correctness_matrix"],
     # classifiers=,
     # python_requires=,
-    install_requires = ["numpy","pandas","matplotlib"],
+    install_requires = ["numpy","matplotlib"],
     license = "BSD 3-Clause License"
 )
