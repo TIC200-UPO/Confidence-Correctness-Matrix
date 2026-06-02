@@ -1,3 +1,0 @@
-Example of Usage
-================
-Hola
